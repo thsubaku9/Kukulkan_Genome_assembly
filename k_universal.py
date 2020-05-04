@@ -218,7 +218,7 @@ if __name__=="__main__":
         sccDFS(adjList,postOrderMap[_postorder[_pos]],component,_componentNumber)
         _componentNumber+=1
             
-    if(_componentNumber and verifyEulerian(adjList)):
+    if(_componentNumber==1 and verifyEulerian(adjList)):
         print("Graph has FSCC and passes Eulerian Verification")
         final_k_universal = createCompleteEulerianCycle(adjList,k,0,mapToBinary)
         print("Required value: {}".format(final_k_universal))
