@@ -214,17 +214,16 @@ if __name__=="__main__":
     _pos = len(_postorder) - 1
     while(len(list(filter(lambda x: x == None,component))) > 0):
         while(_pos >=0 and component[postOrderMap[_postorder[_pos]]] != None):
-            pos -= 1
+            _pos -= 1
         sccDFS(adjList,postOrderMap[_postorder[_pos]],component,_componentNumber)
         _componentNumber+=1
-        
-    print("Eulerian Verification result: {}".format(verifyEulerian(adjList)))
-    if(_componentNumber == 1):
-        print("Graph has FSCC")
+            
+    if(_componentNumber and verifyEulerian(adjList)):
+        print("Graph has FSCC and passes Eulerian Verification")
         final_k_universal = createCompleteEulerianCycle(adjList,k,0,mapToBinary)
         print("Required value: {}".format(final_k_universal))
     else:
-        print("Graph doesn't have FSCC. Cannot perform Eulerian Cycle")
+        print("Graph doesn't have FSCC or Cannot perform Eulerian Cycle")
         exit(0)
         
     #createEulerianCycle(res,k)  #instead of a hamiltonian path, we utilize 
