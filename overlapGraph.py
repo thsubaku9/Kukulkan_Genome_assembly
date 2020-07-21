@@ -4,15 +4,15 @@ read2int = dict()
 
 def checkOverlap(preStr,postStr):
     _max = 0
-    for k in range(0,len(preStr),1):        
+    for k in range(1,len(preStr)+1,1):        
         overlap = 0
         r1 = ""
         r2 = ""
-        while((overlap < len(postStr)) and (overlap<=k) and (postStr[overlap] == preStr[len(preStr) - 1 - k + overlap])):
+        while((overlap < len(postStr)) and (overlap < k) and (postStr[overlap] == preStr[len(preStr) - 1 - (k-1) + overlap])):
             r1+=preStr[len(postStr) - 1 + overlap - k]
             r2+=postStr[overlap]
             overlap+=1            
-        if(overlap>_max):            
+        if(overlap>_max and overlap == k):            
             _max = overlap
 
     return _max
@@ -29,6 +29,7 @@ def FBFS(adjMat,startNode,vertices):
     
     forwardQueue.append(startNode);backwardQueue.append(startNode);
     maxScore = 0;location = None
+    
     while(len(forwardQueue)> 0 or len(backwardQueue)>0):
         
         if(len(forwardQueue)>0):
@@ -39,15 +40,10 @@ def FBFS(adjMat,startNode,vertices):
             forwardVisited[currentNode] = True
             for j in range(0,vertices):
                 if(adjMat[currentNode][j]>0):
-                    if(FnetOverlapScore[j] < FnetOverlapScore[currentNode] + adjMat[currentNode][j] and not forwardVisited[j]):
+                    if(FnetOverlapScore[j] < FnetOverlapScore[currentNode] + adjMat[currentNode][j] and (not forwardVisited[j]) and (adjMat[currentNode][j] > 0)):
                         forwardParent[j] = currentNode
                         FnetOverlapScore[j] = FnetOverlapScore[currentNode] + adjMat[currentNode][j]
                         forwardQueue.append(j)
-                        '''
-                    elif( FnetOverlapScore[j] < FnetOverlapScore[currentNode] + adjMat[currentNode][j]):
-                        forwardParent[j] = currentNode
-                        FnetOverlapScore[j] = FnetOverlapScore[currentNode] + adjMat[currentNode][j]
-                        '''
             
         if(len(backwardQueue)>0):
             currentNode = backwardQueue[0]
@@ -57,33 +53,32 @@ def FBFS(adjMat,startNode,vertices):
             backwardVisited[currentNode] = True
             for j in range(0,vertices):
                 if(adjMat[j][currentNode]>0):
-                    if(BnetOverlapScore[j] < BnetOverlapScore[currentNode] + adjMat[j][currentNode] and not backwardVisited[j]):
+                    if(BnetOverlapScore[j] < BnetOverlapScore[currentNode] + adjMat[j][currentNode] and (not backwardVisited[j]) and (adjMat[j][currentNode] > 0)):
                         backwardParent[currentNode] = j
                         BnetOverlapScore[j] = BnetOverlapScore[currentNode] + adjMat[j][currentNode]
                         backwardQueue.append(j)
-                        '''
-                    elif( BnetOverlapScore[j] < BnetOverlapScore[currentNode] + adjMat[j][currentNode]):
-                        backwardParent[currentNode] = j
-                        BnetOverlapScore[j] = BnetOverlapScore[currentNode] + adjMat[j][currentNode]
-                        '''
-        
+    
+    #we do not need to do this segment since we are generating overlap cycles for each read
+    '''
     for i in range(0,vertices):
-        if (maxScore < FnetOverlapScore[i] + BnetOverlapScore[i]):
+        if ( (maxScore < FnetOverlapScore[i] + BnetOverlapScore[i]) and (FnetOverlapScore[i] > 0) and (BnetOverlapScore[i]>0)):
             maxScore = FnetOverlapScore[i] + BnetOverlapScore[i]
             location = i
             #print("Score:{} for node {}".format(maxScore,location))
-
+    '''
+    
     nodeSequence = []
-    j = location
+    j = startNode
+    maxScore = FnetOverlapScore[j] + BnetOverlapScore[j]
     while(backwardParent[j] != None):
+        maxScore+= BnetOverlapScore[j]
         nodeSequence.append(j)
-        j = backwardParent[j]
-        
+        j = backwardParent[j]        
     while(j != None):
+        maxScore+= FnetOverlapScore[j]
         nodeSequence.append(j)
         j = forwardParent[j]
-
-    nodeSequence.append(location)
+		
     nodeSequence.reverse()
     return (maxScore,nodeSequence)
         
@@ -120,6 +115,7 @@ for i in range(0,data.totalReads):
         bestScore = best_possible_result[i][0]
         bestNode = i        
 
+ 
 
 bestResult = best_possible_result[bestNode][1]
 
@@ -129,3 +125,5 @@ score = 0
 for i in range(1,len(bestResult)):
     score+= adjMat[bestResult[i-1]][bestResult[i]]
     DNA += data.genReads[bestResult[i]][adjMat[bestResult[i-1]][bestResult[i]]:]
+
+print("Score of {} and DNA:\n{}".format(score,DNA))
