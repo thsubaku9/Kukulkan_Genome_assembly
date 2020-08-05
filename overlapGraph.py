@@ -40,7 +40,7 @@ def FBFS(adjMat,startNode,vertices):
             forwardVisited[currentNode] = True
             for j in range(0,vertices):
                 if(adjMat[currentNode][j]>0):
-                    if(FnetOverlapScore[j] < FnetOverlapScore[currentNode] + adjMat[currentNode][j] and (not forwardVisited[j]) and (adjMat[currentNode][j] > 0)):
+                    if(FnetOverlapScore[j] < FnetOverlapScore[currentNode] + adjMat[currentNode][j] and (not forwardVisited[j])):
                         forwardParent[j] = currentNode
                         FnetOverlapScore[j] = FnetOverlapScore[currentNode] + adjMat[currentNode][j]
                         forwardQueue.append(j)
@@ -53,34 +53,43 @@ def FBFS(adjMat,startNode,vertices):
             backwardVisited[currentNode] = True
             for j in range(0,vertices):
                 if(adjMat[j][currentNode]>0):
-                    if(BnetOverlapScore[j] < BnetOverlapScore[currentNode] + adjMat[j][currentNode] and (not backwardVisited[j]) and (adjMat[j][currentNode] > 0)):
-                        backwardParent[currentNode] = j
+                    if(BnetOverlapScore[j] < BnetOverlapScore[currentNode] + adjMat[j][currentNode] and (not backwardVisited[j])):
+                        #backwardParent[currentNode] = j
+                        backwardParent[j] = currentNode #
                         BnetOverlapScore[j] = BnetOverlapScore[currentNode] + adjMat[j][currentNode]
                         backwardQueue.append(j)
-    
-    #we do not need to do this segment since we are generating overlap cycles for each read
-    '''
+
+    # find a node which maximizes bnetOverlap and fnetOverlap
+    # run the node sequence for this node
+
+    maxScore = 0; centralNode = None
     for i in range(0,vertices):
-        if ( (maxScore < FnetOverlapScore[i] + BnetOverlapScore[i]) and (FnetOverlapScore[i] > 0) and (BnetOverlapScore[i]>0)):
-            maxScore = FnetOverlapScore[i] + BnetOverlapScore[i]
-            location = i
-            #print("Score:{} for node {}".format(maxScore,location))
-    '''
-    
+        if(i!=startNode):
+            if(BnetOverlapScore[i] + FnetOverlapScore[i] > maxScore and BnetOverlapScore[i] > 0 and FnetOverlapScore[i] > 0):
+                maxScore = BnetOverlapScore[i] + FnetOverlapScore[i]; centralNode = i
+
+
     nodeSequence = []
-    j = startNode
-    maxScore = FnetOverlapScore[j] + BnetOverlapScore[j]
-    while(backwardParent[j] != None):
-        maxScore+= BnetOverlapScore[j]
-        nodeSequence.append(j)
-        j = backwardParent[j]        
-    while(j != None):
-        maxScore+= FnetOverlapScore[j]
+    if (centralNode == None):
+        return (0,nodeSequence)
+    
+    j = centralNode
+    retScore = 0
+    
+    while(j != None):        
         nodeSequence.append(j)
         j = forwardParent[j]
-		
+
     nodeSequence.reverse()
-    return (maxScore,nodeSequence)
+    j = centralNode
+        
+    while(j != None):        
+        nodeSequence.append(j)
+        j = backwardParent[j]
+
+    for i in range(1,len(nodeSequence)):
+        retScore+=adjMat[nodeSequence[i-1]][nodeSequence[i]]
+    return (retScore,nodeSequence)
         
             
     #at the common vertex meet, we need to check whether all the vertices have been visited effectively
@@ -109,7 +118,7 @@ for i in range(0,data.totalReads):
     res = FBFS(adjMat,i,len(adjMat))
     best_possible_result.append(res)
     
-bestNode = None;bestScore = 0
+bestNode = None; bestScore = 0
 for i in range(0,data.totalReads):
     if(best_possible_result[i][0] > bestScore):
         bestScore = best_possible_result[i][0]
